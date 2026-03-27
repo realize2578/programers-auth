@@ -5,6 +5,7 @@ import com.back.domain.member.service.MemberService;
 import com.back.domain.post.post.dto.PostDto;
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
+import com.back.global.exception.ServiceException;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -63,11 +64,16 @@ public class ApiV1PostController {
 
     @PostMapping
     @Operation(summary="게시물 작성")
-    public RsData<PostWriteResBody> write(@RequestBody @Valid PostWriteReqBody reqBody) {
+    public RsData<PostWriteResBody> write(
+            @RequestBody @Valid PostWriteReqBody reqBody,
+            @RequestParam @NotBlank @Size(min=2, max=30) String username,
+            @RequestParam @NotBlank @Size(min=2, max=30) String password) {
 
-        Member actor = memberService.findByUsername("user1").get();
+        Member actor = memberService.findByUsername(username).get();
 
-
+        if(!password.equals(actor.getPassword())) {
+            throw new ServiceException("401-1","비밀번호가 일치하지 않습니다.");
+        }
 
 
         Post post = postService.write(actor,reqBody.title, reqBody.content);
