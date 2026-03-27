@@ -26,8 +26,8 @@ public class BaseInitData {
     @Bean
     public ApplicationRunner initData() {
         return args -> {
-            work1();
-            work2();
+            self.work1();
+            self.work2();
         };
     }
 
