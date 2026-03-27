@@ -72,7 +72,7 @@ public class ApiV1CommentController {
             @RequestBody @Valid CommentWriteReqBody reqBody
     ) {
 
-        Member actor = memberService.findByUsername("user3").get();
+        Member actor = memberService.findByApiKey("user3").get();
 
         Post post = postService.findById(postId).get();
         Comment comment = post.addComment(actor,reqBody.content);

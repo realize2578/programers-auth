@@ -7,7 +7,7 @@ public class ServiceException extends RuntimeException {
     private final String msg;
     private final String resultCode;
 
-    public ServiceException(String msg, String resultCode) {
+    public ServiceException(String resultCode,String msg) {
         super(msg);
         this.msg = msg;
         this.resultCode = resultCode;
