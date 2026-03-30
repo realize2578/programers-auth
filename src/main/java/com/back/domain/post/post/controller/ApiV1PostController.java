@@ -5,7 +5,7 @@ import com.back.domain.member.service.MemberService;
 import com.back.domain.post.post.dto.PostDto;
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
-import com.back.global.exception.ServiceException;
+import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -24,6 +24,7 @@ public class ApiV1PostController {
 
     private final PostService postService;
     private final MemberService memberService;
+    private final Rq rq;
 
     @GetMapping
     @Operation(summary="게시물 다건 조회")
@@ -66,11 +67,9 @@ public class ApiV1PostController {
     @Operation(summary="게시물 작성")
     public RsData<PostWriteResBody> write(
             @RequestBody @Valid PostWriteReqBody reqBody,
-            @RequestParam String apiKey){
+            @RequestHeader("Authorization") String apiKey){
 
-        Member actor = memberService.findByApiKey(apiKey).orElseThrow(
-                ()-> new ServiceException("401-1", "유효하지 않은 API 키입니다.")
-        );
+        Member actor = rq.getActor(); // 인증된 사용자 정보 가져오기
 
         Post post = postService.write(actor,reqBody.title, reqBody.content);
         long postsCount = postService.count();
@@ -107,10 +106,19 @@ public class ApiV1PostController {
     @Operation(summary="게시물 수정")
     public RsData<PostModifyResBody> modify(
             @PathVariable int id,
-            @RequestBody @Valid PostModifyReqBody reqBody
+            @RequestBody @Valid PostModifyReqBody reqBody,
+            @RequestHeader("Authorization")String apiKey
     ) {
 
-        Post post = postService.modify(id, reqBody.title, reqBody.content);
+        Member actor = rq.getActor();
+
+        Post post = postService.findById(id).get();
+
+        post.checkModify(actor);
+
+        postService.modify(id, reqBody.title, reqBody.content);
+
+
 
         return new RsData<>(
                 "%d번 게시물이 수정되었습니다.".formatted(post.getId()),
@@ -126,6 +134,12 @@ public class ApiV1PostController {
     public RsData<Void> delete(
             @PathVariable int id
     ) {
+
+        Member actor = rq.getActor(); // 인증된 사용자 정보 가져오기
+
+        Post post = postService.findById(id).get();
+
+        post.checkDelete(actor);
 
         postService.deleteById(id);
 
