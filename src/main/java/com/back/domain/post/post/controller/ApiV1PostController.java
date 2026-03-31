@@ -66,8 +66,7 @@ public class ApiV1PostController {
     @PostMapping
     @Operation(summary="게시물 작성")
     public RsData<PostWriteResBody> write(
-            @RequestBody @Valid PostWriteReqBody reqBody,
-            @RequestHeader("Authorization") String apiKey){
+            @RequestBody @Valid PostWriteReqBody reqBody){
 
         Member actor = rq.getActor(); // 인증된 사용자 정보 가져오기
 
@@ -106,8 +105,7 @@ public class ApiV1PostController {
     @Operation(summary="게시물 수정")
     public RsData<PostModifyResBody> modify(
             @PathVariable int id,
-            @RequestBody @Valid PostModifyReqBody reqBody,
-            @RequestHeader("Authorization")String apiKey
+            @RequestBody @Valid PostModifyReqBody reqBody
     ) {
 
         Member actor = rq.getActor();
