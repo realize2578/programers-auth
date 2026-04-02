@@ -6,6 +6,7 @@ import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,4 +55,7 @@ public class MemberService {
     }
 
 
+    public List<Member> findAll() {
+        return memberRepository.findAll();
+    }
 }
