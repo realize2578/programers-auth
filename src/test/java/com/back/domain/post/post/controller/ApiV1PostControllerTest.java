@@ -323,7 +323,7 @@ public class ApiV1PostControllerTest {
                 .andExpect(handler().methodName("write"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.resultCode").value("401-2"))
-                .andExpect(jsonPath("$.msg").value("잘못된 형식의 인증데이터입니다."));
+                .andExpect(jsonPath("$.msg").value("잘못된 형식입니다."));
     }
 
     @Test
@@ -411,7 +411,7 @@ public class ApiV1PostControllerTest {
                 .andExpect(handler().methodName("modify"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.resultCode").value("403-1"))
-                .andExpect(jsonPath("$.msg").value("수정 권한이 없습니다."));
+                .andExpect(jsonPath("$.msg").value("권한이 없습니다."));
     }
 
     @Test

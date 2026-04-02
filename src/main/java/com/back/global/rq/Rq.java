@@ -34,7 +34,7 @@ public class Rq {
 
 
         //헤더 방식 vs 쿠키 방식
-        if (authorizationHeader.isBlank() ){
+        if (!authorizationHeader.isBlank() ){
             if(!authorizationHeader.startsWith("Bearer ")) {
                 throw new ServiceException("401-2", "잘못된 형식입니다.");
             }
