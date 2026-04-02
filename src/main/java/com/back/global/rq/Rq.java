@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequestScope
@@ -21,44 +23,76 @@ public class Rq {
     private final MemberService memberService;
     private final HttpServletResponse response;
 
-    public void addCookie(String name, String value) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true); // 쿠키를 자바스크립트로 조작할 수 있냐 없냐. true 조작 안되게
-        cookie.setDomain("localhost"); // localhost 도메인에서만 사용 가능하도록 지정
-
-        response.addCookie(
-                cookie
-        );
-    }
 
     public Member getActor() {
 
-        String authorizationHeader = request.getHeader("Authorization");
+        String authorizationHeader = getHeader("Authorization","");
+
 
         String apiKey;
+        String accessToken;
+
+
         //헤더 방식 vs 쿠키 방식
-        if (authorizationHeader != null ){
+        if (authorizationHeader.isBlank() ){
             if(!authorizationHeader.startsWith("Bearer ")) {
                 throw new ServiceException("401-2", "잘못된 형식입니다.");
             }
-            apiKey =authorizationHeader.replace("Bearer ","");
-        } else{
-            apiKey = request.getCookies() == null? ""
-                    : Arrays.stream(request.getCookies())
-                    .filter(cookie -> cookie.getName().equals("apiKey"))
-                    .map(Cookie::getValue)
-                    .findFirst()
-                    .orElse("");
+            String[] headerAuthorizationBits = authorizationHeader.split(" ", 3);
+            apiKey = authorizationHeader.replace("Bearer ", "");
+
+            apiKey = headerAuthorizationBits[1];
+            accessToken = headerAuthorizationBits.length == 3 ? headerAuthorizationBits[2] : "";
+        } else {
+            apiKey = getCookieValue("apiKey", "");
+            accessToken = getCookieValue("accessToken", "");
         }
 
-        if(apiKey.isBlank()){
-            throw new ServiceException("401-3","인증 데이터가 존재하지 않습니다.");
+        Member member = null;
+
+        if (apiKey.isBlank()) {
+            throw new ServiceException("401-1", "apiKey가 존재하지 않습니다.");
         }
 
-        return memberService.findByApiKey(apiKey).orElseThrow(
-                ()-> new ServiceException("401-1", "유효하지 않은 API 키입니다.")
-        );
+        if (!accessToken.isBlank()) {
+            Map<String, Object> payload = memberService.payloadOrNull(accessToken);
+
+            if (payload != null) {
+                int id = (int) payload.get("id");
+                member = memberService.findById(id)
+                        .orElseThrow(() -> new ServiceException("401-3", "accessToken의 id에 해당하는 회원이 존재하지 않습니다."));
+            }
+        }
+
+        // accessToken으로 인증이 제대로 이루어지지 않은 경우
+        if (member == null) {
+            member = memberService
+                    .findByApiKey(apiKey)
+                    .orElseThrow(() -> new ServiceException("401-4", "API 키가 유효하지 않습니다."));
+        }
+
+        return member;
+    }
+
+    private String getHeader(String name, String defaultValue) {
+        return Optional
+                .ofNullable(request.getHeader(name))
+                .filter(headerValue -> !headerValue.isBlank())
+                .orElse(defaultValue);
+    }
+
+    private String getCookieValue(String name, String defaultValue) {
+        return Optional
+                .ofNullable(request.getCookies())
+                .flatMap(
+                        cookies ->
+                                Arrays.stream(cookies)
+                                        .filter(cookie -> cookie.getName().equals(name))
+                                        .map(Cookie::getValue)
+                                        .filter(value -> !value.isBlank())
+                                        .findFirst()
+                )
+                .orElse(defaultValue);
     }
 
     public void deleteCookie(String name) {
@@ -69,5 +103,17 @@ public class Rq {
         cookie.setMaxAge(0);
 
         response.addCookie(cookie);
+    }
+
+    public void addCookie(String name, String value) {
+
+        Cookie cookie = new Cookie(name, value);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setDomain("localhost");
+
+        response.addCookie(
+                cookie
+        );
     }
 }
