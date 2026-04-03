@@ -73,6 +73,8 @@ public class Rq {
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setDomain("localhost");
+        cookie.setSecure(true); // http X http O
+        cookie.setAttribute("SameSite","Strict"); // SameSite 내가 관리하는 내 사이트, 같은 사이트 사이에서만 쿠키 전달
 
         response.addCookie(
                 cookie

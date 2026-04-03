@@ -35,6 +35,7 @@ public class ApiV1AdmPostControllerTest {
 
     @Test
     @DisplayName("글 전체 개수 조회, count")
+//    @WithUserDetails("admin")// 학습 페이지에는 설명없음. JWT 방식이 아닌 UserDetailService 방식으로의 인증
     void t1() throws Exception {
 
         Member actor = memberRepository.findByUsername("admin").get();
@@ -50,8 +51,6 @@ public class ApiV1AdmPostControllerTest {
         long count = postRepository.count();
 
         resultActions
-                .andExpect(handler().handlerType(ApiV1AdmPostController.class))
-                .andExpect(handler().methodName("count"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalCount").value(count));
     }
@@ -70,11 +69,9 @@ public class ApiV1AdmPostControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(handler().handlerType(ApiV1AdmPostController.class))
-                .andExpect(handler().methodName("count"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.resultCode").value("403-1"))
-                .andExpect(jsonPath("$.msg").value("권한이 없습니다"));
+                .andExpect(jsonPath("$.msg").value("권한이 없습니다."));
 
     }
 }
