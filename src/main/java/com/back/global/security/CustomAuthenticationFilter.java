@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -91,10 +90,11 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         boolean isAccessTokenExists = !accessToken.isBlank();
         boolean isAccessTokenValid = false;
+        boolean isApidKeyExists = !apiKey.isBlank();
 
-        if (apiKey.isBlank()) {
-            throw new ServiceException("401-1", "apiKey가 존재하지 않습니다.");
-        }
+//        if (apiKey.isBlank()) {
+//            throw new ServiceException("401-1", "apiKey가 존재하지 않습니다.");
+//        }
 
         if (isAccessTokenExists) {
             Map<String, Object> payload = memberService.payloadOrNull(accessToken);
@@ -106,6 +106,10 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                 member = new Member(id, username, nickname);
                 isAccessTokenValid = true;
             }
+        }
+        if (!isApidKeyExists){
+            filterChain.doFilter(request, response);
+            return;
         }
 
         // accessToken으로 인증이 제대로 이루어지지 않은 경우
@@ -122,9 +126,11 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
         // SecurityContextHolder에 인증데이터 저장
 
-        UserDetails user = new User( // new User(String username String password List<> authorities)아이디, 비밀번호, 권한
+        UserDetails user = new SecurityUser( // new User(String username String password List<> authorities)아이디, 비밀번호, 권한
+                member.getId(),
                 member.getUsername(),
                 member.getPassword(),
+                member.getNickname(),
                 List.of()
         );
 
